@@ -1,0 +1,64 @@
+clear;close all;clc;
+image=imread('233.jpg');
+% image=imread('Filename.xxx');
+r=image(:,:,1);%真彩图是RGB三个的叠加
+g=image(:,:,2);%这里把三个分别存为矩阵单独进行计算
+b=image(:,:,3);
+w=2;%设置高度倍数
+l=2;%设置宽度倍数
+r=ext(r,w,l);%分别调用ext函数
+g=ext(g,w,l);
+b=ext(b,w,l);
+out(:,:,1)=r;%分别存储了结果
+out(:,:,2)=g;
+out(:,:,3)=b;
+out=uint8(out);%将结果进行转码
+imshow(out);
+function output=ext(a,w,l)
+[m,n]=size(a);%得到矩阵的长和宽
+a=[a(1,:); a; a([end-1 end],:)];%边界处理
+a=[a(:,1) a a(:,[end-1 end])];%
+ini_u=(m-1)/(w*m-1);%计算插值的两点间步长
+ini_v=(n-1)/(l*n-1);
+output=zeros(w*m,l*n);%构造一个w*m,1*n矩阵
+for j=1:l*n
+    y=round((j-1)*ini_v+1);%新矩阵的y值
+    s1=(j-1)*ini_v+1-y;%新矩阵的插值间距离
+    for i=1:w*m
+        x=round((i-1)*ini_u+1);
+        s2=(i-1)*ini_u+1-x;
+
+        output(i,j) = Coef(s2,-1)*Coef(s1,-1)*a(x-1+1,y-1+1)...
+                    + Coef(s2,-1)*Coef(s1, 0)*a(x-1+1,y+1  )...
+                    + Coef(s2,-1)*Coef(s1, 1)*a(x-1+1,y+1+1)...
+                    + Coef(s2,-1)*Coef(s1, 2)*a(x-1+1,y+2+1)...
+                    + Coef(s2, 0)*Coef(s1,-1)*a(x+1  ,y-1+1)...
+                    + Coef(s2, 0)*Coef(s1, 0)*a(x+1  ,y+1  )...
+                    + Coef(s2, 0)*Coef(s1, 1)*a(x+1  ,y+1+1)...
+                    + Coef(s2, 0)*Coef(s1, 2)*a(x+1  ,y+2+1)...
+                    + Coef(s2, 1)*Coef(s1,-1)*a(x+1+1,y-1+1)...
+                    + Coef(s2, 1)*Coef(s1, 0)*a(x+1+1,y+1  )...
+                    + Coef(s2, 1)*Coef(s1, 1)*a(x+1+1,y+1+1)...
+                    + Coef(s2, 1)*Coef(s1, 2)*a(x+1+1,y+2+1)...
+                    + Coef(s2, 2)*Coef(s1,-1)*a(x+2+1,y-1+1)...
+                    + Coef(s2, 2)*Coef(s1, 0)*a(x+2+1,y+1  )...
+                    + Coef(s2, 2)*Coef(s1, 1)*a(x+2+1,y+1+1)...
+                    + Coef(s2, 2)*Coef(s1, 2)*a(x+2+1,y+2+1);%写成矩阵相乘的形式会更简洁
+    end
+end
+end
+
+function c = Coef(s,i)
+switch i
+    case -1
+     c = (((3+s)^3-4*(2+s)^3+6*(1+s)^3-4*s^3)/6);
+    case 0
+        c = (((2+s)^3-4*(1+s)^3+6*s^3)/6);
+    case 1
+        c = (((1+s)^3-4*s^3)/6);
+    case 2
+        c = ((s^3)/6);
+    otherwise
+        error('error');
+end 
+end
